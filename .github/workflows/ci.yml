@@ -1,40 +1,6 @@
 name: test-and-quality
 
 on:
-  # Rodar CI em PR e em push na main garante qualidade antes de entrar em produção
-  pull_request:
-    branches: ["main"]
-  push:
-    branches: ["main"]
-
-# Evita gastar runner com builds antigos (se você pushar de novo, cancela o anterior)
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
-# Princípio de menor privilégio (segurança)
-permissions:
-  contents: read
-
-jobs:
-  quality:
-    name: test e qualidade
-    runs-on: ubuntu-latest
-
-    # Fail-fast: evita job travado consumindo minutos
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Configurar Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.1…
-[11:17, 02/02/2026] Pamella Fontana Ferola: name: test-and-quality
-
-on:
   pull_request:
     branches: ["main"]
   push:
