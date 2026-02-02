@@ -1,3 +1,10 @@
+"""
+Repository (persistência).
+
+"Fake DB" em memória e operações CRUD.
+Essa camada é a que trocaria por MySQL/DynamoDB no futuro.
+"""
+
 from __future__ import annotations
 
 from typing import Dict, List, Optional, Set

@@ -1,3 +1,10 @@
+"""
+Models (Pydantic).
+
+Schema validado de magia e regras condicionais (campos dinâmicos).
+Garante integridade e consistência dos dados.
+"""
+
 from __future__ import annotations
 
 from typing import List, Optional, Literal, Tuple

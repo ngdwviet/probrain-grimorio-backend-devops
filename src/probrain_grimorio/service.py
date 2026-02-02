@@ -1,3 +1,12 @@
+"""
+Service (regras de negócio).
+
+Responsabilidades:
+- aplicar regras do domínio (magias, validações de regra, dano escalável)
+- coordenar repository/cache
+- NÃO conhecer HTTP/status codes (isso é do controller)
+"""
+
 from __future__ import annotations
 
 import uuid

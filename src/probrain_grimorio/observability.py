@@ -1,3 +1,10 @@
+"""
+Observability.
+
+Logs/métricas (simulados) e correlação por request_id/client_id.
+Camada pronta para plugar Datadog/OpenTelemetry sem alterar o domínio.
+"""
+
 from __future__ import annotations
 
 import json
